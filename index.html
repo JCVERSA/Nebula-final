@@ -1,57 +1,50 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nebula Bot Connection</title>
+    <title>Nebula Pairing Service</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #050505; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: #111; padding: 40px; border-radius: 20px; box-shadow: 0 0 30px rgba(0, 255, 204, 0.2); border: 1px solid #00ffcc; text-align: center; width: 350px; }
-        h1 { color: #00ffcc; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
-        p { font-size: 14px; color: #888; margin-bottom: 25px; }
-        input { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #00ffcc; font-size: 16px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #00ffcc; color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #00cca3; transform: scale(1.02); }
-        #code-box { margin-top: 30px; padding: 15px; border: 2px dashed #00ffcc; border-radius: 10px; font-size: 28px; font-weight: bold; display: none; color: #fff; text-shadow: 0 0 10px #00ffcc; }
-        .loading { display: none; margin-top: 20px; color: #00ffcc; font-style: italic; }
+        body { background: #000; color: #0f0; font-family: monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { border: 1px solid #0f0; padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0 0 15px #0f0; }
+        input { background: #111; border: 1px solid #0f0; color: #0f0; padding: 10px; width: 80%; margin: 15px 0; border-radius: 5px; }
+        button { background: #0f0; color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        #pair-code { font-size: 2.2em; margin-top: 20px; color: #fff; text-decoration: underline; display: none; }
+        .loader { display: none; color: #fff; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Nebula Bot</h1>
-        <p>Entrez votre numéro avec l'indicatif pays <br>(Ex: 22505000...)</p>
-        <input type="text" id="phoneNumber" placeholder="Ex: 2250102030405">
-        <button onclick="getPairingCode()">Générer le Code</button>
-        <div class="loading" id="loading">Initialisation de la session...</div>
-        <div id="code-box"></div>
+    <div class="card">
+        <h2>NEBULA PAIRING</h2>
+        <p>Entrez votre numéro WhatsApp</p>
+        <input type="text" id="num" placeholder="Ex: 2250501020304">
+        <br>
+        <button onclick="startPairing()">OBTENIR LE CODE</button>
+        <div class="loader" id="loading">Génération du code en cours...</div>
+        <div id="pair-code"></div>
+        <p id="status" style="font-size: 0.8em; color: #888; margin-top: 20px;"></p>
     </div>
 
     <script>
-        async function getPairingCode() {
-            const num = document.getElementById('phoneNumber').value;
-            const codeBox = document.getElementById('code-box');
-            const loading = document.getElementById('loading');
-
-            if(!num) return alert("Veuillez entrer un numéro !");
-
-            loading.style.display = 'block';
-            codeBox.style.display = 'none';
+        async function startPairing() {
+            const number = document.getElementById('num').value;
+            if(!number) return alert("Numéro requis");
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('pair-code').style.display = 'none';
 
             try {
-                const response = await fetch(`/code?number=${num}`);
-                const data = await response.json();
+                const res = await fetch(`/pair?number=${number}`);
+                const data = await res.json();
                 
-                loading.style.display = 'none';
+                document.getElementById('loading').style.display = 'none';
                 if(data.code) {
-                    codeBox.innerText = data.code;
-                    codeBox.style.display = 'block';
+                    document.getElementById('pair-code').innerText = data.code;
+                    document.getElementById('pair-code').style.display = 'block';
+                    document.getElementById('status').innerText = "Entrez ce code sur votre WhatsApp (Appareils liés)";
                 } else {
-                    alert("Erreur lors de la génération.");
+                    alert("Erreur: " + (data.error || "Inconnue"));
                 }
-            } catch (e) {
-                loading.style.display = 'none';
-                alert("Impossible de contacter le serveur.");
-            }
+            } catch (e) { alert("Serveur indisponible"); }
         }
     </script>
 </body>
