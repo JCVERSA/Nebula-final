@@ -2,34 +2,56 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Nebula Bot - Pairing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula Bot Connection</title>
     <style>
-        body { background: #0f0f0f; color: #00ffcc; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .box { border: 2px solid #00ffcc; padding: 30px; border-radius: 15px; box-shadow: 0 0 20px #00ffcc; text-align: center; max-width: 400px; }
-        input { background: transparent; border: 1px solid #00ffcc; color: white; padding: 10px; width: 90%; margin: 15px 0; border-radius: 5px; text-align: center; }
-        button { background: #00ffcc; color: black; border: none; padding: 12px 25px; cursor: pointer; font-weight: bold; border-radius: 5px; }
-        #result { margin-top: 20px; font-size: 1.5em; letter-spacing: 5px; color: #fff; text-shadow: 0 0 10px #00ffcc; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #050505; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: #111; padding: 40px; border-radius: 20px; box-shadow: 0 0 30px rgba(0, 255, 204, 0.2); border: 1px solid #00ffcc; text-align: center; width: 350px; }
+        h1 { color: #00ffcc; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+        p { font-size: 14px; color: #888; margin-bottom: 25px; }
+        input { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #00ffcc; font-size: 16px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #00ffcc; color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #00cca3; transform: scale(1.02); }
+        #code-box { margin-top: 30px; padding: 15px; border: 2px dashed #00ffcc; border-radius: 10px; font-size: 28px; font-weight: bold; display: none; color: #fff; text-shadow: 0 0 10px #00ffcc; }
+        .loading { display: none; margin-top: 20px; color: #00ffcc; font-style: italic; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>NEBULA PAIRING</h2>
-        <p>Entrez votre numéro avec l'indicatif (ex: 225...)</p>
-        <input type="text" id="number" placeholder="22500000000">
-        <button onclick="getCode()">GÉNÉRER LE CODE</button>
-        <div id="result"></div>
+    <div class="container">
+        <h1>Nebula Bot</h1>
+        <p>Entrez votre numéro avec l'indicatif pays <br>(Ex: 22505000...)</p>
+        <input type="text" id="phoneNumber" placeholder="Ex: 2250102030405">
+        <button onclick="getPairingCode()">Générer le Code</button>
+        <div class="loading" id="loading">Initialisation de la session...</div>
+        <div id="code-box"></div>
     </div>
 
     <script>
-        async function getCode() {
-            const num = document.getElementById('number').value;
-            const resDiv = document.getElementById('result');
-            resDiv.innerText = "Chargement...";
+        async function getPairingCode() {
+            const num = document.getElementById('phoneNumber').value;
+            const codeBox = document.getElementById('code-box');
+            const loading = document.getElementById('loading');
+
+            if(!num) return alert("Veuillez entrer un numéro !");
+
+            loading.style.display = 'block';
+            codeBox.style.display = 'none';
+
             try {
-                const response = await fetch(`/pair?phone=${num}`);
+                const response = await fetch(`/code?number=${num}`);
                 const data = await response.json();
-                resDiv.innerText = data.code || "Erreur";
-            } catch (e) { resDiv.innerText = "Erreur"; }
+                
+                loading.style.display = 'none';
+                if(data.code) {
+                    codeBox.innerText = data.code;
+                    codeBox.style.display = 'block';
+                } else {
+                    alert("Erreur lors de la génération.");
+                }
+            } catch (e) {
+                loading.style.display = 'none';
+                alert("Impossible de contacter le serveur.");
+            }
         }
     </script>
 </body>
