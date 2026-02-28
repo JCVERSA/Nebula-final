@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nebula Bot — WhatsApp Linker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Syne:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #04030a;
+      --surface:   #0d0b1a;
+      --card:      #110f22;
+      --border:    rgba(139, 92, 246, 0.25);
+      --border-h:  rgba(139, 92, 246, 0.7);
+      --purple:    #8b5cf6;
+      --cyan:      #22d3ee;
+      --pink:      #f472b6;
+      --text:      #e2e0f0;
+      --muted:     #6b6a85;
+      --success:   #34d399;
+      --error:     #f87171;
+      --glow-p:    rgba(139, 92, 246, 0.4);
+      --glow-c:    rgba(34, 211, 238, 0.3);
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── Stars background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.8) 0%, transparent 100%),
+        radial-gradient(1px 1px at 25% 40%, rgba(255,255,255,0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 40% 8%,  rgba(255,255,255,0.9) 0%, transparent 100%),
+        radial-gradient(1px 1px at 55% 55%, rgba(255,255,255,0.7) 0%, transparent 100%),
+        radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,0.8) 0%, transparent 100%),
+        radial-gradient(1px 1px at 85% 70%, rgba(255,255,255,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 5%  80%, rgba(255,255,255,0.7) 0%, transparent 100%),
+        radial-gradient(1px 1px at 92% 35%, rgba(255,255,255,0.9) 0%, transparent 100%),
+        radial-gradient(1px 1px at 30% 90%, rgba(255,255,255,0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 65% 85%, rgba(255,255,255,0.8) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 48% 30%, rgba(139,92,246,0.9) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 78% 55%, rgba(34,211,238,0.8) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 18% 65%, rgba(244,114,182,0.7) 0%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Nebula glow orbs ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 15% 20%, rgba(139,92,246,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 35% at 85% 80%, rgba(34,211,238,0.10) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 50% 50%, rgba(244,114,182,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Layout ── */
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    /* ── Card ── */
+    .card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      box-shadow:
+        0 0 0 1px rgba(139,92,246,0.08),
+        0 0 40px rgba(139,92,246,0.12),
+        0 0 80px rgba(139,92,246,0.06),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+      animation: fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Logo ── */
+    .logo-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .logo-orbit {
+      position: relative;
+      width: 80px;
+      height: 80px;
+    }
+
+    .logo-core {
+      position: absolute;
+      inset: 12px;
+      background: linear-gradient(135deg, var(--purple), var(--cyan));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px var(--glow-p), 0 0 40px var(--glow-c);
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 20px var(--glow-p), 0 0 40px var(--glow-c); }
+      50%       { box-shadow: 0 0 35px var(--glow-p), 0 0 60px var(--glow-c); }
+    }
+
+    .logo-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 1.5px solid transparent;
+      background:
+        linear-gradient(var(--card), var(--card)) padding-box,
+        linear-gradient(135deg, var(--purple), var(--cyan)) border-box;
+      animation: spin 8s linear infinite;
+    }
+
+    .logo-ring::before {
+      content: '';
+      position: absolute;
+      top: -3px; left: 50%;
+      width: 6px; height: 6px;
+      background: var(--cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--cyan);
+      transform: translateX(-50%);
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    .logo-core svg { width: 22px; height: 22px; color: white; }
+
+    .logo-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      background: linear-gradient(135deg, #e2e0f0 30%, var(--purple), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logo-sub {
+      font-size: 0.8rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ── Social icons ── */
+    .socials {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .social-btn {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none;
+      color: var(--muted);
+      transition: all 0.2s;
+      font-size: 0.9rem;
+    }
+    .social-btn:hover {
+      border-color: var(--purple);
+      color: var(--purple);
+      box-shadow: 0 0 12px var(--glow-p);
+      transform: translateY(-2px);
+    }
+    .social-btn.yt:hover  { border-color: #ef4444; color: #ef4444; box-shadow: 0 0 12px rgba(239,68,68,0.4); }
+    .social-btn.tg:hover  { border-color: #38bdf8; color: #38bdf8; box-shadow: 0 0 12px rgba(56,189,248,0.4); }
+    .social-btn.wa:hover  { border-color: #22c55e; color: #22c55e; box-shadow: 0 0 12px rgba(34,197,94,0.4); }
+    .social-btn.gh:hover  { border-color: var(--text); color: var(--text); box-shadow: 0 0 12px rgba(255,255,255,0.2); }
+
+    /* ── Toggle ── */
+    .toggle {
+      display: flex;
+      gap: 0.4rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.3rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 0.6rem 1rem;
+      border: none;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Syne', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.25s;
+      letter-spacing: 0.03em;
+    }
+
+    .toggle-btn.active {
+      background: linear-gradient(135deg, rgba(139,92,246,0.25), rgba(34,211,238,0.15));
+      color: var(--text);
+      border: 1px solid var(--border-h);
+      box-shadow: 0 0 16px rgba(139,92,246,0.2);
+    }
+
+    .toggle-btn svg { width: 15px; height: 15px; }
+
+    /* ── Input ── */
+    .field-label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .input {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      outline: none;
+      transition: all 0.2s;
+      margin-bottom: 1rem;
+    }
+
+    .input::placeholder { color: var(--muted); font-family: 'Syne', sans-serif; letter-spacing: 0; }
+    .input:focus {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 3px rgba(139,92,246,0.15), 0 0 20px rgba(139,92,246,0.1);
+    }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      width: 100%;
+      padding: 0.9rem;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--purple), #6d28d9);
+      color: white;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.25s;
+      box-shadow: 0 0 20px var(--glow-p);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .btn-primary:hover:not(:disabled)::before { opacity: 1; }
+    .btn-primary:hover:not(:disabled) {
+      box-shadow: 0 0 30px var(--glow-p), 0 0 60px rgba(139,92,246,0.2);
+      transform: translateY(-1px);
+    }
+    .btn-primary:active:not(:disabled) { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-copy {
+      width: 100%;
+      padding: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      transition: all 0.2s;
+    }
+
+    .btn-copy:hover:not(:disabled) {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      box-shadow: 0 0 12px var(--glow-c);
+    }
+    .btn-copy:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── Code display ── */
+    .code-box {
+      margin-top: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border-h);
+      border-radius: 10px;
+      padding: 1.25rem;
+      text-align: center;
+      animation: fadeIn 0.3s ease;
+      box-shadow: 0 0 20px var(--glow-p);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .code-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .code-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      background: linear-gradient(135deg, var(--purple), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── QR Box ── */
+    .qr-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .qr-box img {
+      width: 200px; height: 200px;
+      border-radius: 8px;
+      border: 2px solid var(--border);
+    }
+
+    .qr-placeholder {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 28px; height: 28px;
+      border: 2.5px solid rgba(139,92,246,0.2);
+      border-top-color: var(--purple);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    /* ── Error / Success ── */
+    .alert {
+      margin-top: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      text-align: center;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .alert-error {
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.3);
+      color: var(--error);
+    }
+
+    .alert-success {
+      background: rgba(52,211,153,0.1);
+      border: 1px solid rgba(52,211,153,0.3);
+      color: var(--success);
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      margin-top: 1.75rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid rgba(139,92,246,0.12);
+    }
+
+    .footer p {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .footer span {
+      background: linear-gradient(135deg, var(--purple), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+    }
+
+    /* ── SVG icons inline ── */
+    .icon { display: inline-block; vertical-align: middle; }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="card">
+
+    <!-- Logo -->
+    <div class="logo-wrap">
+      <div class="logo-orbit">
+        <div class="logo-ring"></div>
+        <div class="logo-core">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <div class="logo-title">NEBULA BOT</div>
+        <div class="logo-sub">WhatsApp Linker</div>
+      </div>
+    </div>
+
+    <!-- Social Icons -->
+    <div class="socials">
+      <a href="https://youtu.be/gNg2Qw5R-Q4?si=uBxvxRXfEKR0QjQG" target="_blank" class="social-btn yt" title="YouTube">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M23 7s-.3-2-1.2-2.8c-1.1-1.2-2.4-1.2-3-1.3C16.1 2.7 12 2.7 12 2.7s-4.1 0-6.8.2c-.6.1-1.9.1-3 1.3C1.3 5 1 7 1 7S.7 9.1.7 11.2v2c0 2.1.3 4.2.3 4.2s.3 2 1.2 2.8c1.1 1.2 2.6 1.1 3.3 1.2C7.3 21.6 12 21.6 12 21.6s4.1 0 6.8-.3c.6-.1 1.9-.1 3-1.3.9-.8 1.2-2.8 1.2-2.8s.3-2.1.3-4.2v-2C23.3 9.1 23 7 23 7zm-13.5 8.5V8.5l8 3.5-8 3.5z"/></svg>
+      </a>
+      <a href="https://t.me/Neonjce2" target="_blank" class="social-btn tg" title="Telegram">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm5.9 8.2l-2 9.4c-.1.6-.5.8-.9.5l-2.5-1.8-1.2 1.1c-.1.1-.3.2-.6.2l.2-2.7 5.1-4.6c.2-.2 0-.3-.3-.1L6.3 15.5 3.9 14.8c-.5-.2-.5-.5.1-.7l11.5-4.4c.5-.2.9.1.4.5z"/></svg>
+      </a>
+      <a href="https://wa.me/237640143760" target="_blank" class="social-btn wa" title="WhatsApp">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-1 1.1-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2.1-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.7.3-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.1 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 1.9-1.4.2-.6.2-1.2.1-1.3-.1-.1-.3-.2-.6-.3z"/><path d="M12 0C5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6C8 23.4 10 24 12 24c6.6 0 12-5.4 12-12S18.6 0 12 0zm0 22c-1.9 0-3.7-.5-5.3-1.4l-.4-.2-3.6.9.9-3.5-.2-.4C2.5 15.8 2 13.9 2 12 2 6.5 6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z"/></svg>
+      </a>
+      <a href="https://github.com/JCVERSA" target="_blank" class="social-btn gh" title="GitHub">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12c0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2 1-.3 2-.4 3-.4s2 .1 3 .4c2.3-1.6 3.3-1.2 3.3-1.2.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6C20.6 21.8 24 17.3 24 12c0-6.6-5.4-12-12-12z"/></svg>
+      </a>
+    </div>
+
+    <!-- Toggle -->
+    <div class="toggle">
+      <button class="toggle-btn active" id="btn-pair" onclick="setMode('pair')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Pair Code
+      </button>
+      <button class="toggle-btn" id="btn-qr" onclick="setMode('qr')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
+        QR Code
+      </button>
+    </div>
+
+    <!-- Pair Code Panel -->
+    <div id="panel-pair">
+      <label class="field-label">WhatsApp Number (with country code)</label>
+      <input class="input" id="phone-input" type="tel" placeholder="+33 6 12 34 56 78" />
+
+      <button class="btn-primary" id="generate-btn" onclick="generatePairCode()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        GENERATE PAIR CODE
+      </button>
+
+      <div id="code-box" style="display:none;" class="code-box">
+        <div class="code-label">Your Pair Code</div>
+        <div class="code-value" id="code-value">----</div>
+      </div>
+
+      <div id="error-msg" style="display:none;" class="alert alert-error"></div>
+
+      <button class="btn-copy" id="copy-btn" onclick="copyCode()" disabled>
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span id="copy-label">Copy Code</span>
+      </button>
+    </div>
+
+    <!-- QR Code Panel -->
+    <div id="panel-qr" style="display:none;">
+      <div class="qr-box" id="qr-box">
+        <div class="qr-placeholder">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--muted); margin-bottom: 0.5rem;">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/>
+          </svg>
+          <p>Generating QR code...</p>
+        </div>
+      </div>
+      <div id="qr-error" style="display:none;" class="alert alert-error"></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>© 2025 <span>Nebula Bot</span> — by Dark Neon</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentMode = 'pair';
+  let currentCode = '';
+
+  function setMode(mode) {
+    if (mode === currentMode) return;
+    currentMode = mode;
+
+    document.getElementById('btn-pair').classList.toggle('active', mode === 'pair');
+    document.getElementById('btn-qr').classList.toggle('active', mode === 'qr');
+    document.getElementById('panel-pair').style.display = mode === 'pair' ? 'block' : 'none';
+    document.getElementById('panel-qr').style.display  = mode === 'qr'   ? 'block' : 'none';
+
+    if (mode === 'qr') generateQR();
+  }
+
+  async function generatePairCode() {
+    const input = document.getElementById('phone-input').value.trim();
+    const errEl = document.getElementById('error-msg');
+    const codeBox = document.getElementById('code-box');
+    const btn = document.getElementById('generate-btn');
+
+    errEl.style.display = 'none';
+    codeBox.style.display = 'none';
+    document.getElementById('copy-btn').disabled = true;
+    currentCode = '';
+
+    if (!input) {
+      errEl.textContent = 'Please enter your WhatsApp number.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    const clean = input.replace(/[^0-9]/g, '');
+    if (clean.length < 8) {
+      errEl.textContent = 'Please enter a valid phone number with country code.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = `<div class="spinner"></div> GENERATING...`;
+
+    try {
+      const res = await fetch(`/pair?number=${clean}`);
+      if (res.ok) {
+        const data = await res.json();
+        currentCode = data.code || '';
+        document.getElementById('code-value').textContent = currentCode;
+        codeBox.style.display = 'block';
+        document.getElementById('copy-btn').disabled = false;
+      } else {
+        errEl.textContent = 'Service unavailable. Please try again.';
+        errEl.style.display = 'block';
+      }
+    } catch (e) {
+      errEl.textContent = 'Connection error. Make sure the bot is running.';
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> GENERATE PAIR CODE`;
+    }
+  }
+
+  async function generateQR() {
+    const box = document.getElementById('qr-box');
+    const errEl = document.getElementById('qr-error');
+    errEl.style.display = 'none';
+    box.innerHTML = `<div class="spinner"></div>`;
+
+    try {
+      const res = await fetch('/qr');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.qr) {
+          box.innerHTML = `<img src="${data.qr}" alt="QR Code" /><p style="font-size:0.78rem;color:var(--muted)">Scan with WhatsApp → Linked Devices</p>`;
+        } else {
+          throw new Error('No QR data');
+        }
+      } else {
+        throw new Error('Failed');
+      }
+    } catch (e) {
+      box.innerHTML = `<p class="qr-placeholder">Failed to load QR code.</p>`;
+      errEl.textContent = 'Could not generate QR code. Make sure the bot is running.';
+      errEl.style.display = 'block';
+    }
+  }
+
+  async function copyCode() {
+    if (!currentCode) return;
+    try {
+      await navigator.clipboard.writeText(currentCode);
+      const label = document.getElementById('copy-label');
+      label.textContent = 'Copied!';
+      document.getElementById('copy-btn').style.borderColor = 'var(--success)';
+      document.getElementById('copy-btn').style.color = 'var(--success)';
+      setTimeout(() => {
+        label.textContent = 'Copy Code';
+        document.getElementById('copy-btn').style.borderColor = '';
+        document.getElementById('copy-btn').style.color = '';
+      }, 2000);
+    } catch (e) {}
+  }
+
+  // Allow Enter key on input
+  document.getElementById('phone-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') generatePairCode();
+  });
+</script>
+</body>
+</html>
